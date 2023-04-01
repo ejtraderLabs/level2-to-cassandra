@@ -10,11 +10,6 @@ use std::collections::HashMap;
 use std::time::SystemTime;
 
 
-
-
-
-
-
 async fn connect_to_cassandra(
     cassandra_host: &str,
     cassandra_username: &str,
