@@ -181,9 +181,11 @@ let api_address = format!("tcp://{}", env::var("API_ADDRESS").unwrap());
 let secret_key = env::var("SECRET_KEY")?;
 let public_key = env::var("PUBLIC_KEY")?;
 let server_key = env::var("SERVER_KEY")?;
-
+let keyspace = env::var("KEYSPACE")?;
+let topic = env::var("TOPIC")?; 
 let ctx = Context::new();
 let socket = ctx.socket(SocketType::SUB).expect("Failed to create subscriber socket");
+
 
 socket
     .set_curve_publickey(public_key.as_bytes())
@@ -200,17 +202,17 @@ socket
     .expect("Failed to connect to publisher");
 
 socket
-    .set_subscribe(b"FEUR")
-    .expect("Failed to subscribe to topic 'FEUR'");
+    .set_subscribe(topic.as_bytes())
+    .expect("Failed to subscribe to topic");
 let mut cumulative_data: HashMap<String, (i32, i32)> = HashMap::new();
 let mut last_processed_date: Option<SystemTime> = None;
 
-    let keyspace = "forexs"; // or any other name for the keyspace
+    
     let session = connect_to_cassandra(
         &cassandra_host,
         &cassandra_username,
         &cassandra_password,
-        keyspace,
+        &keyspace,
     )
     .await?;
 
@@ -219,7 +221,7 @@ loop {
     let topic = std::str::from_utf8(&msg[0]).expect("Failed to convert topic to string");
     let topic_type = &msg[1];
 
-    match cassandra_operations(&session,keyspace, topic, &topic_type, &msg[2], &mut cumulative_data, &mut last_processed_date).await {
+    match cassandra_operations(&session, &keyspace, topic, &topic_type, &msg[2], &mut cumulative_data, &mut last_processed_date).await {
         Ok(_) => {}
         Err(e) => {
             eprintln!("Erro ao executar as operações do Cassandra: {}", e);

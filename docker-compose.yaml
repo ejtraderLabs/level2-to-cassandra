@@ -11,6 +11,8 @@ services:
       CASSANDRA_USERNAME: ${CASSANDRA_USERNAME}
       CASSANDRA_PASSWORD: ${CASSANDRA_PASSWORD}
       ENVIRONMENT: ${ENVIRONMENT} # full / book / tick
+      KEYSPACE: ${KEYSPACE}
+      TOPIC: ${TOPIC}
     volumes:
       - level2tocql:/app
 

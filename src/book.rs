@@ -117,6 +117,8 @@ let api_address = format!("tcp://{}", env::var("API_ADDRESS").unwrap());
 let secret_key = env::var("SECRET_KEY")?;
 let public_key = env::var("PUBLIC_KEY")?;
 let server_key = env::var("SERVER_KEY")?;
+let keyspace = env::var("KEYSPACE")?; 
+let topic = env::var("TOPIC")?; 
 
 let ctx = Context::new();
 let socket = ctx.socket(SocketType::SUB).expect("Failed to create subscriber socket");
@@ -136,15 +138,15 @@ socket
     .expect("Failed to connect to publisher");
 
 socket
-    .set_subscribe(b"FEUR")
-    .expect("Failed to subscribe to topic 'FEUR'");
+    .set_subscribe(topic.as_bytes())
+    .expect("Failed to subscribe to topic");
 
-    let keyspace = "forex"; // or any other name for the keyspace
+    
     let session = connect_to_cassandra(
         &cassandra_host,
         &cassandra_username,
         &cassandra_password,
-        keyspace,
+        &keyspace,
     )
     .await?;
 
@@ -153,7 +155,7 @@ loop {
     let topic = std::str::from_utf8(&msg[0]).expect("Failed to convert topic to string");
     let topic_type = &msg[1];
 
-    match cassandra_operations(&session,keyspace, topic, &topic_type, &msg[2]).await {
+    match cassandra_operations(&session,&keyspace, topic, &topic_type, &msg[2]).await {
         Ok(_) => {}
         Err(e) => {
             eprintln!("Erro ao executar as operações do Cassandra: {}", e);
