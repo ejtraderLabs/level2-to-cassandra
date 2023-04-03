@@ -23,9 +23,7 @@ RUN cargo build --release
 FROM gcr.io/distroless/cc
 
 
-WORKDIR /app
-
-
+WORKDIR /code
 
 # Copy our build
 COPY --from=builder /app/entrypoint.sh ./
@@ -49,4 +47,4 @@ COPY --from=builder /lib/x86_64-linux-gnu/libcom_err* /lib/x86_64-linux-gnu/
 
 
 
-ENTRYPOINT ["/app/entrypoint.sh"]]
+ENTRYPOINT ["/code/entrypoint.sh"]

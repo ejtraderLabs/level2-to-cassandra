@@ -3,11 +3,11 @@
 APP_MODE=${APP_MODE:-book}
 
 if [ "$APP_MODE" = "book" ]; then
-    exec /app/book
+    exec /code/book
 elif [ "$APP_MODE" = "tick" ]; then
-    exec /app/tick
+    exec /code/tick
 elif [ "$APP_MODE" = "full" ]; then
-    exec /app/full
+    exec /code/full
 else
     echo "APP_MODE desconhecido: $APP_MODE"
     exit 1
