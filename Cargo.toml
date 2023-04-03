@@ -1,5 +1,5 @@
 [package]
-name = "api-toc-cassandra"
+name = "full"
 version = "0.1.0"
 edition = "2021"
 

@@ -113,7 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 let cassandra_host = env::var("CASSANDRA_HOST")?;
 let cassandra_username = env::var("CASSANDRA_USERNAME")?;
 let cassandra_password = env::var("CASSANDRA_PASSWORD")?;
-let api_address = env::var("API_ADDRESS")?;
+let api_address = format!("tcp://{}", env::var("API_ADDRESS").unwrap());
 let secret_key = env::var("SECRET_KEY")?;
 let public_key = env::var("PUBLIC_KEY")?;
 let server_key = env::var("SERVER_KEY")?;
@@ -139,7 +139,7 @@ socket
     .set_subscribe(b"FEUR")
     .expect("Failed to subscribe to topic 'FEUR'");
 
-    let keyspace = "forexs"; // or any other name for the keyspace
+    let keyspace = "forex"; // or any other name for the keyspace
     let session = connect_to_cassandra(
         &cassandra_host,
         &cassandra_username,
