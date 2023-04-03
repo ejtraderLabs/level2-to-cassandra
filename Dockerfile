@@ -12,9 +12,10 @@ WORKDIR /app
 
 COPY ./ .
 
+RUN chmod +x entrypoint.sh
 RUN cargo build --release
 
-# FROM bitcoinnanolabs/rust AS builder
+
 
 ####################################################################################################
 ## Final image
@@ -23,9 +24,11 @@ FROM gcr.io/distroless/cc
 
 
 WORKDIR /app
-ENV ENVIRONMENT full
+
+
 
 # Copy our build
+COPY --from=builder /app/entrypoint.sh ./
 COPY --from=builder /app/target/release/book ./
 COPY --from=builder /app/target/release/tick ./
 COPY --from=builder /app/target/release/full ./
@@ -45,5 +48,5 @@ COPY --from=builder /lib/x86_64-linux-gnu/libcom_err* /lib/x86_64-linux-gnu/
 
 
 
-CMD ["/app/${ENVIRONMENT}"]
 
+ENTRYPOINT ["/app/entrypoint.sh"]]
