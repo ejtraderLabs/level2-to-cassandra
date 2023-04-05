@@ -60,7 +60,6 @@ async fn cassandra_operations(
     msg: &[u8],
     cumulative_data: &mut HashMap<String, (i32, i32)>,
     last_processed_date: &mut Option<SystemTime>,
-    table_created: &RefCell<bool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match topic_type {
         b"TICK" => {
@@ -89,31 +88,27 @@ async fn cassandra_operations(
 
             let cumdelta = *cumbuy - *cumsell;
 
-            if !*table_created.borrow() {
-                println!("CREATE TABLE IF NOT EXISTS:");
-                let create_table_query = format!(
-                    "CREATE TABLE IF NOT EXISTS {}.{prefix}_tick (
-                        symbol text,
-                        bid double,
-                        price double,
-                        ask double,
-                        time timestamp,
-                        volume int,
-                        type text,
-                        cumbuy int,
-                        cumsell int,
-                        cumdelta int,
-                        PRIMARY KEY (symbol,time,price)
-                    ) WITH CLUSTERING ORDER BY (time DESC);",
-                    keyspace,
-                    prefix = topic
-                );
-            
+            let create_table_query = format!(
+                "CREATE TABLE IF NOT EXISTS {}.{prefix}_tick (
+                    symbol text,
+                    bid double,
+                    price double,
+                    ask double,
+                    time timestamp,
+                    volume int,
+                    type text,
+                    cumbuy int,
+                    cumsell int,
+                    cumdelta int,
+                    PRIMARY KEY (symbol,time,price)
+                ) WITH CLUSTERING ORDER BY (time DESC);",
+                keyspace,
+                prefix = topic
+            );
+        
             
             session.query(create_table_query, &[]).await?;
-            *table_created.borrow_mut() = true;
-            
-            }
+        
 
             // Insert data
             let insert_query = format!(
@@ -170,7 +165,7 @@ socket
     .expect("Failed to subscribe to topic");
 let mut cumulative_data: HashMap<String, (i32, i32)> = HashMap::new();
 let mut last_processed_date: Option<SystemTime> = None;
-let table_created = RefCell::new(false);
+
 
     
     let session = connect_to_cassandra(
@@ -186,7 +181,7 @@ loop {
     let topic = std::str::from_utf8(&msg[0]).expect("Failed to convert topic to string");
     let topic_type = &msg[1];
 
-    match cassandra_operations(&session,&keyspace, topic, &topic_type, &msg[2], &mut cumulative_data, &mut last_processed_date, &table_created).await {
+    match cassandra_operations(&session,&keyspace, topic, &topic_type, &msg[2], &mut cumulative_data, &mut last_processed_date).await {
         Ok(_) => {}
         Err(e) => {
             eprintln!("Erro ao executar as operações do Cassandra: {}", e);
