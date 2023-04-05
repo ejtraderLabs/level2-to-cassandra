@@ -24,3 +24,4 @@ path = "src/tick.rs"
 [[bin]]
 name = "book"
 path = "src/book.rs"
+

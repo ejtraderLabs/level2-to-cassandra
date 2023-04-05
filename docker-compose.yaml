@@ -4,14 +4,13 @@ services:
     image: ejtrader/level2_to_cql:rust
     container_name: level2_to_cql
     environment:
-      APP_MODE: ${APP_MODE}  # full / book / tick
+      APP_MODE: ${APP_MODE} # full / book / tick
       API_ADDRESS: ${API_ADDRESS} # ip_or_domain:port 127.0.0.3:4444
       SECRET_KEY: ${SECRET_KEY}
       PUBLIC_KEY: ${PUBLIC_KEY}
       CASSANDRA_HOST: ${CASSANDRA_HOST} # 127.0.0.5 for not default port add 127.0.0.5:port
       CASSANDRA_USERNAME: ${CASSANDRA_USERNAME}
       CASSANDRA_PASSWORD: ${CASSANDRA_PASSWORD}
-     
       KEYSPACE: ${KEYSPACE}
       TOPIC: ${TOPIC}
     volumes:

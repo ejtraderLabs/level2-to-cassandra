@@ -1,50 +1,44 @@
-##################################################################################################
-# Builder
-###################################################################################################
-FROM rust:latest AS builder
+FROM rust:alpine3.17 AS builder
 
 
-RUN apt update && apt install -y libzmq3-dev -y && apt install libcomerr2 -y
-RUN update-ca-certificates
+# Set the environment variables for pkg-config
+ENV export PKG_CONFIG_SYSROOT_DIR=/usr/lib
+ENV export PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig
 
-RUN /sbin/ldconfig -v
+# Instale as dependências necessárias, incluindo o pacote libstdc++.
+RUN apk add --no-cache g++ libstdc++ musl-dev zeromq-dev pkgconfig
+
 WORKDIR /app
 
 COPY ./ .
 
-RUN chmod +x entrypoint.sh
-RUN cargo build --release
+# Adicione a configuração ao arquivo cargo/config.toml
+RUN mkdir -p .cargo && \
+    echo '[target.x86_64-unknown-linux-musl]' >> .cargo/config.toml && \
+    echo 'rustflags = ["-C", "target-feature=-crt-static"]' >> .cargo/config.toml
 
+RUN rustup target add x86_64-unknown-linux-musl
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+RUN chmod +x start.sh
 
 
 ####################################################################################################
 ## Final image
 ####################################################################################################
-FROM gcr.io/distroless/cc
+FROM alpine:3.17
 
 
 WORKDIR /code
 
+# Install runtime dependencies for ZeroMQ
+RUN apk add --no-cache libzmq
+
 # Copy our build
-COPY --from=builder /app/entrypoint.sh ./
-COPY --from=builder /app/target/release/book ./
-COPY --from=builder /app/target/release/tick ./
-COPY --from=builder /app/target/release/full ./
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libzmq* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libbsd* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libsodium* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libpgm* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libnorm* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libgssapi* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libmd* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libkrb5* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libk5crypto* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libcomo* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libkeyutils* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /lib/x86_64-linux-gnu/libkeyutils* /lib/x86_64-linux-gnu/
-COPY --from=builder /lib/x86_64-linux-gnu/libcom_err* /lib/x86_64-linux-gnu/
+COPY --from=builder /app/start.sh /usr/local/bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/book /usr/local/bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/tick /usr/local/bin/
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/full /usr/local/bin/
 
 
-
-
-ENTRYPOINT ["/code/entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/start.sh"]
